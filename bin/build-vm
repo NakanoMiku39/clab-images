@@ -1,0 +1,207 @@
+#!/bin/bash
+# Build virtual machine images (cloud image, vagrant boxes)
+
+# nounset: "Treat unset variables and parameters [...] as an error when performing parameter expansion."
+# errexit: "Exit immediately if [...] command exits with a non-zero status."
+set -o nounset -o errexit
+shopt -s extglob
+set -x
+readonly DEFAULT_DISK_SIZE="16G"
+DISK_SIZE="${DISK_SIZE:-${DEFAULT_DISK_SIZE}}"
+
+function init() {
+  readonly ORIG_PWD="${PWD}"
+  readonly OUTPUT="${PWD}/output"
+  readonly BASE_DIR="${PWD}/base"
+  local tmpdir
+  tmpdir="$(mktemp --dry-run --directory --tmpdir="${PWD}/tmp")"
+  readonly TMPDIR="${tmpdir}"
+  mkdir -p "${OUTPUT}" "${TMPDIR}" "${BASE_DIR}"
+  if [ -n "${SUDO_UID:-}" ] && [[ -n "${SUDO_GID:-}" ]]; then
+    chown "${SUDO_UID}:${SUDO_GID}" "${OUTPUT}" "${TMPDIR}" "${BASE_DIR}"
+  fi
+  cd "${TMPDIR}"
+
+  readonly MOUNT="${PWD}/mount"
+  mkdir "${MOUNT}"
+}
+
+# Do some cleanup when the script exits
+function cleanup() {
+  # We want all the commands to run, even if one of them fails.
+  set +o errexit
+  if [ -n "${NBD_DEV:-}" ]; then
+    qemu-nbd --disconnect "${NBD_DEV}"
+  fi
+  if [ -n "${MOUNT:-}" ] && mountpoint -q "${MOUNT}"; then
+    # We do not want risking deleting ex: the package cache
+    umount --recursive "${MOUNT}" || exit 1
+  fi
+  if [ -n "${TMPDIR:-}" ]; then
+    rm -rf "${TMPDIR}"
+  fi
+}
+trap cleanup EXIT
+
+# Cleanup the image and trim it
+function image_cleanup() {
+  sync -f "${MOUNT}/etc/os-release"
+  fstrim --verbose "${MOUNT}"
+}
+
+function find_free_nbd() {
+  NBD_DEV=""
+  for dev in /dev/nbd*; do
+    S=$(cat /sys/class/block/$(basename $dev)/size)
+    if [ "$S" == "0" ]; then
+      NBD_DEV=$dev
+      break
+    fi
+  done
+  if [ -z "$NBD_DEV" ]; then
+    echo "No free nbd device found"
+    exit 1
+  fi
+
+  echo $NBD_DEV
+}
+
+# Helper function: wait until a given loop device has settled
+# ${1} - loop device
+function wait_until_settled() {
+  udevadm settle
+  blockdev --flushbufs --rereadpt "${1}"
+  until test -e "${1}p1"; do
+    echo "${1}p1 doesn't exist yet..."
+    sleep 1
+  done
+}
+
+# Mount image helper (loop device + mount)
+function mount_image() {
+  echo "base function, should be overridden by distro-specific functions"
+}
+
+# Unmount image helper (umount + detach loop device)
+function unmount_image() {
+  echo "base function, should be overridden by distro-specific functions"
+}
+
+# Compute SHA256, adjust owner to $SUDO_UID:$SUDO_UID and move to output/
+function mv_to_output() {
+  sha256sum "${1}" >"${1}.SHA256"
+  if [ -n "${SUDO_UID:-}" ]; then
+    chown "${SUDO_UID}:${SUDO_GID}" "${1}"{,.SHA256}
+  fi
+  mv "${1}"{,.SHA256} "${OUTPUT}/"
+}
+
+# Function to convert qcow2 to raw img
+function qcow2_to_img() {
+  local input_qcow2="${1}"
+  local output_img="${2}"
+  
+  echo "Converting qcow2 image to raw img: ${input_qcow2} -> ${output_img}"
+  qemu-img convert -f qcow2 -O raw "${input_qcow2}" "${output_img}"
+}
+
+# Generic download_source function - will be overridden by distro-specific ones
+function download_source() {
+  echo "Base download_source function. Should be overridden by distro-specific functions."
+  return 1
+}
+
+# Helper function: create a new image from the "base" image
+# ${1} - final file
+# ${2} - pre function
+# ${3} - post function
+function create_image() {
+  local tmp_image
+  tmp_image="$(basename "$(mktemp -u)")"
+  cp -a "${BASE_IMAGE}" "${tmp_image}"
+  resize_image "${tmp_image}" "${DISK_SIZE}"
+  mount_image "${tmp_image}" 
+
+  arch-chroot "${MOUNT}" sh -c "$(os_update)"
+
+  if [ 0 -lt "${#PACKAGES[@]}" ]; then
+    arch-chroot "${MOUNT}" sh -c "$(os_install)" "${PACKAGES[*]}"
+  fi
+  if [ 0 -lt "${#SERVICES[@]}" ]; then
+    for service in "${SERVICES[@]}"; do
+      echo "enable ${service}" >>"${MOUNT}/usr/lib/systemd/system-preset/80-lcpu-image.preset"
+    done
+  fi
+  "${2}"
+  arch-chroot "${MOUNT}" sh -c "$(os_cleanup)"
+  image_cleanup
+  unmount_image
+  "${3}" "${tmp_image}" "${1}"
+  mv_to_output "${1}"
+}
+
+# ${1} - Optional build version. If not set, will generate a default based on date.
+# ${2} - Distribution (ubuntu, rocky, etc.)
+# ${3} - Flavor (server, minimal, etc.)
+function main() {
+  if [ "$(id -u)" -ne 0 ]; then
+    echo "root is required"
+    exit 1
+  fi
+  init
+
+  # Check if distribution and flavor are provided
+  if [ -z "${1:-}" ] || [ -z "${2:-}" ]; then
+    echo "ERROR: Distribution and flavor must be specified!"
+    echo "Usage: $0 [build_version] <distribution> <flavor>"
+    exit 1
+  fi
+
+  local distribution="${1}"
+  local flavor="${2}"
+
+  local build_version
+  if [ -z "${3:-}" ]; then
+    build_version="$(date +%Y%m%d)"
+    echo "WARNING: BUILD_VERSION wasn't set!"
+    echo "Falling back to $build_version"
+  else
+    build_version="${3}"
+  fi
+  
+  # Check if the distribution and flavor directories exist
+  if [ ! -d "${ORIG_PWD}/images/${distribution}" ]; then
+    echo "ERROR: Distribution '${distribution}' not found in images directory!"
+    exit 1
+  fi
+  
+  if [ ! -f "${ORIG_PWD}/images/${distribution}/${flavor}/build.sh" ]; then
+    echo "ERROR: Flavor '${flavor}' not found for distribution '${distribution}'!"
+    exit 1
+  fi
+
+  FLAVOR_ROOT="${ORIG_PWD}/images/${distribution}/${flavor}"
+  
+  # Source the common.sh file for the distro first
+  if [ -f "${ORIG_PWD}/images/${distribution}/common.sh" ]; then
+    # shellcheck source=/dev/null
+    source "${ORIG_PWD}/images/${distribution}/common.sh"
+  else
+    echo "ERROR: common.sh not found for distribution '${distribution}'!"
+    exit 1
+  fi
+  
+  # Download the base image if needed
+  download_source
+  
+  # Source the flavor-specific script
+  # shellcheck source=/dev/null
+  source "${ORIG_PWD}/images/${distribution}/${flavor}/build.sh"
+
+  # Create the final image
+  create_image "${IMAGE_NAME}" pre post
+}
+
+PATH=$(pwd)/bin:$PATH
+
+main "$@"
