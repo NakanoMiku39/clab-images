@@ -1,0 +1,16 @@
+[Unit]
+Description=ShadowDesk backend service for DISPLAY %i
+After=network.target shadowgnome@%i.service
+
+[Service]
+Type=simple
+User=almalinux
+Group=almalinux
+Environment="DISPLAY=:%i"
+EnvironmentFile=-%h/.config/shadowdesk/backend.env
+ExecStart=/opt/shadowdesk/backend/backend
+ExecStop=/usr/bin/pkill -u %i -f /opt/shadowdesk/backend/backend
+Restart=always
+
+[Install]
+WantedBy=default.target

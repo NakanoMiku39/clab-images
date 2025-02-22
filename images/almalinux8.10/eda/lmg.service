@@ -1,0 +1,13 @@
+[Unit]
+Description=EDA License Manager
+After=network.target
+
+[Service]
+Type=oneshot
+User=almalinux
+Group=almalinux
+ExecStart=/opt/eda/Synopsys/scl/2021.03/linux64/bin/lmgrd -c /opt/eda/Synopsys/scl/2021.03/admin/license/Synopsys.dat
+RemainAfterExit=yes
+
+[Install]
+WantedBy=default.target

@@ -1,0 +1,13 @@
+[rpmfusion-free-updates]
+name=RPM Fusion for EL 8 - Free - Updates
+baseurl=http://mirrors.ustc.edu.cn/rpmfusion/free/el/updates/8/$basearch/
+#mirrorlist=http://mirrors.rpmfusion.org/mirrorlist?repo=free-el-updates-released-8&arch=$basearch
+enabled=1
+gpgcheck=0
+
+[rpmfusion-nonfree-updates]
+name=RPM Fusion for EL 8 - Nonfree - Updates
+baseurl=http://mirrors.ustc.edu.cn/rpmfusion/nonfree/el/updates/8/$basearch/
+#mirrorlist=http://mirrors.rpmfusion.org/mirrorlist?repo=nonfree-el-updates-released-8&arch=$basearch
+enabled=1
+gpgcheck=0
