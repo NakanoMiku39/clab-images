@@ -5,7 +5,7 @@
 IMAGE_NAME="ubuntu24.04-server-pku-${build_version}.qcow2"
 DISK_SIZE="10G"
 PACKAGES=(qemu-guest-agent)
-SERVICES=()
+SERVICES=(qemu-guest-agent.service)
 
 function pre() {
   sudo sed -i 's@//.*archive.ubuntu.com@//mirrors.pku.edu.cn@g' "${MOUNT}"/etc/apt/sources.list.d/ubuntu.sources
@@ -14,7 +14,7 @@ function pre() {
 }
 
 function post() {
-  # Convert raw image to qcow2 format
-  qemu-img convert -c -f raw -O qcow2 "${1}" "${2}"
+  # compress the image, which is qcow2 format
+  qemu-img convert -c -f qcow2 -O qcow2 "${1}" "${2}"
   rm "${1}"
 }

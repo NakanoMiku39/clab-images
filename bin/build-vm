@@ -120,12 +120,12 @@ function create_image() {
   tmp_image="$(basename "$(mktemp -u)")"
   cp -a "${BASE_IMAGE}" "${tmp_image}"
   resize_image "${tmp_image}" "${DISK_SIZE}"
-  mount_image "${tmp_image}" 
+  mount_image "${tmp_image}"
 
   arch-chroot "${MOUNT}" sh -c "$(os_update)"
 
   if [ 0 -lt "${#PACKAGES[@]}" ]; then
-    arch-chroot "${MOUNT}" sh -c "$(os_install)" "${PACKAGES[*]}"
+    arch-chroot "${MOUNT}" sh -c "$(os_install) ${PACKAGES[*]}"
   fi
   if [ 0 -lt "${#SERVICES[@]}" ]; then
     for service in "${SERVICES[@]}"; do

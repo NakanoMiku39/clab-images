@@ -1,7 +1,7 @@
 #!/bin/bash
 # Common functions for Ubuntu images
 
-DISTRO="ubuntu24.04"
+DISTRO="almalinux8.10"
 IMAGE_NAME="${DISTRO}-base.img"
 BASE_IMAGE="${BASE_DIR}/${IMAGE_NAME}"
 
@@ -20,7 +20,7 @@ function download_source() {
   echo "Downloading Ubuntu cloud image for ${flavor}..."
   
   # Different URLs based on flavor
-  wget -q -O "${BASE_IMAGE}" "https://mirrors.tuna.tsinghua.edu.cn/ubuntu-cloud-images/noble/current/noble-server-cloudimg-amd64.img" 
+  wget -q -O "${BASE_IMAGE}" "https://mirrors.pku.edu.cn/almalinux/8.10/cloud/x86_64/images/AlmaLinux-8-GenericCloud-latest.x86_64.qcow2" 
   
   # Ubuntu cloud images are typically in qcow2 format already
   echo "Download complete: ${BASE_IMAGE}"
@@ -32,11 +32,11 @@ function resize_image() {
   local image_path="${1}"
   local new_size="${2}"
   
-  # ubuntu cloud images are already in qcow2 format, partition table:
-  # /dev/nbd0p1  2099200 7339998 5240799  2.5G Linux filesystem
-  # /dev/nbd0p14    2048   10239    8192    4M BIOS boot
-  # /dev/nbd0p15   10240  227327  217088  106M EFI System
-  # /dev/nbd0p16  227328 2097152 1869825  913M Linux extended boot
+  # almalinux partition layout
+  # /dev/nbd2p1    2048     4095     2048    1M BIOS boot
+  # /dev/nbd2p2    4096   413695   409600  200M EFI System
+  # /dev/nbd2p3  413696  2510847  2097152    1G Linux filesystem
+  # /dev/nbd2p4 2510848 20969471 18458624  8.8G Linux filesystem
 
   # Resize the image to the new size
   echo "Resizing image to ${new_size}..."
@@ -62,11 +62,11 @@ function resize_image() {
   # fix gpt partition table
   sgdisk -e "${NBD_DEV}"
   # resize partition
-  parted "${NBD_DEV}" resizepart 1 100%
+  parted "${NBD_DEV}" resizepart 4 100%
   fdisk -l "${NBD_DEV}"
   # resize filesystem
-  e2fsck -f "${NBD_DEV}p1"
-  resize2fs "${NBD_DEV}p1"
+  e2fsck -f "${NBD_DEV}p4"
+  resize2fs "${NBD_DEV}p4"
   fdisk -l "${NBD_DEV}"
   
   # Disconnect the NBD device
@@ -77,16 +77,16 @@ function resize_image() {
 }
 
 function os_update() {
-  echo "DEBIAN_FRONTEND=noninteractive apt-get update && DEBIAN_FRONTEND=noninteractive apt-get upgrade -y"
+  echo "dnf update -y"
 }
 
 # Function to install packages on Ubuntu
 function os_install() {
-  echo "DEBIAN_FRONTEND=noninteractive apt-get install -y"
+  echo "dnf install -y"
 }
 
 function os_cleanup() {
-  echo "DEBIAN_FRONTEND=noninteractive apt-get autoremove -y && DEBIAN_FRONTEND=noninteractive apt-get clean"
+  echo "dnf clean all"
 }
 
 function mount_image() {
@@ -95,9 +95,9 @@ function mount_image() {
     wait_until_settled "${NBD_DEV}"
   
   # Mount partitions
-  mount "${NBD_DEV}p1" "${MOUNT}"
-  mount "${NBD_DEV}p16" "${MOUNT}/boot"
-  mount "${NBD_DEV}p15" "${MOUNT}/boot/efi"
+  mount "${NBD_DEV}p4" "${MOUNT}"
+  mount "${NBD_DEV}p3" "${MOUNT}/boot"
+  mount "${NBD_DEV}p2" "${MOUNT}/boot/efi"
 }
 
 function unmount_image() {
