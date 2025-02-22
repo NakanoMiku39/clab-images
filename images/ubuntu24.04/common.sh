@@ -92,8 +92,8 @@ function os_cleanup() {
 function mount_image() {
   NBD_DEV=$(find_free_nbd)
   qemu-nbd --connect="${NBD_DEV}" "${1:-${IMAGE}}"
-    wait_until_settled "${NBD_DEV}"
-  
+  sleep 2
+
   # Mount partitions
   mount "${NBD_DEV}p1" "${MOUNT}"
   mount "${NBD_DEV}p16" "${MOUNT}/boot"

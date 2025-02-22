@@ -66,17 +66,6 @@ function find_free_nbd() {
   echo $NBD_DEV
 }
 
-# Helper function: wait until a given loop device has settled
-# ${1} - loop device
-function wait_until_settled() {
-  udevadm settle
-  blockdev --flushbufs --rereadpt "${1}"
-  until test -e "${1}p1"; do
-    echo "${1}p1 doesn't exist yet..."
-    sleep 1
-  done
-}
-
 # Mount image helper (loop device + mount)
 function mount_image() {
   echo "base function, should be overridden by distro-specific functions"

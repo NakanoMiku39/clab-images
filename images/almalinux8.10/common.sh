@@ -2,8 +2,9 @@
 # Common functions for Ubuntu images
 
 DISTRO="almalinux8.10"
-IMAGE_NAME="${DISTRO}-base.img"
+IMAGE_NAME="${DISTRO}-base.qcow2"
 BASE_IMAGE="${BASE_DIR}/${IMAGE_NAME}"
+DISK_SIZE="15G"
 
 # Download the Ubuntu cloud image
 # ${1} - Base directory to store the image
@@ -56,17 +57,19 @@ function resize_image() {
   # Wait for partitions to be recognized
   sleep 2
   partprobe "${NBD_DEV}"
+
+  sgdisk -e "${NBD_DEV}"
   
   # Resize the filesystem
   echo "Resizing filesystem on ${NBD_DEV}p1..."
   # fix gpt partition table
-  sgdisk -e "${NBD_DEV}"
   # resize partition
-  parted "${NBD_DEV}" resizepart 4 100%
+  parted -s "${NBD_DEV}" resizepart 4 100%
   fdisk -l "${NBD_DEV}"
+  mount "${NBD_DEV}p4" "${MOUNT}"
   # resize filesystem
-  e2fsck -f "${NBD_DEV}p4"
-  resize2fs "${NBD_DEV}p4"
+  xfs_growfs "${NBD_DEV}p4"
+  umount "${MOUNT}"
   fdisk -l "${NBD_DEV}"
   
   # Disconnect the NBD device
@@ -92,7 +95,7 @@ function os_cleanup() {
 function mount_image() {
   NBD_DEV=$(find_free_nbd)
   qemu-nbd --connect="${NBD_DEV}" "${1:-${IMAGE}}"
-    wait_until_settled "${NBD_DEV}"
+  sleep 2
   
   # Mount partitions
   mount "${NBD_DEV}p4" "${MOUNT}"
