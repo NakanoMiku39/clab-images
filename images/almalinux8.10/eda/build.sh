@@ -10,12 +10,12 @@ SERVICES=(lmg.service)
 
 function pre() {
   mkdir -p "${MOUNT}"/home/almalinux/.config/shadowdesk
-  cp -p ${FLAVOR_ROOT}/rpmfusion.repo "${MOUNT}"/etc/yum.repos.d/ && chmod 644 "${MOUNT}"/etc/yum.repos.d/rpmfusion.repo
+  install -m 644 ${FLAVOR_ROOT}/rpmfusion.repo "${MOUNT}"/etc/yum.repos.d/
   cp -p ${FLAVOR_ROOT}/backend.env "${MOUNT}"/home/almalinux/.config/shadowdesk/ && chmod 644 "${MOUNT}"/home/almalinux/.config/shadowdesk/backend.env
   chown -R 1000:1000 "${MOUNT}"/home/almalinux/.config
-  cp -p ${FLAVOR_ROOT}/*.service "${MOUNT}"/etc/systemd/system/ && chmod 644 "${MOUNT}"/etc/systemd/system/*.service
+  install -m 644 ${FLAVOR_ROOT}/*.service "${MOUNT}"/etc/systemd/system/
   cp -p ${FLAVOR_ROOT}/.bashrc "${MOUNT}"/home/almalinux/ && chown 1000:1000 "${MOUNT}"/home/almalinux/.bashrc && chmod 644 "${MOUNT}"/home/almalinux/.bashrc
-  cp -p ${FLAVOR_ROOT}/lcpu "${MOUNT}"/usr/local/bin/ && chmod 755 "${MOUNT}"/usr/local/bin/lcpu
+  install -m 755 ${FLAVOR_ROOT}/lcpu "${MOUNT}"/usr/local/bin/
   chown -R 1000:1000 "${MOUNT}"/home/almalinux
   
   cp ${ORIG_PWD}/assets/eda/*.rpm "${MOUNT}"/home/almalinux/
