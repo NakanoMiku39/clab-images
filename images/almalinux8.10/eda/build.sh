@@ -5,7 +5,7 @@
 IMAGE_NAME="almalinux8.10-eda-${build_version}.qcow2"
 BASE_IMAGE=$(ls -t ${ORIG_PWD}/output/almalinux8.10-pku-*.qcow2 | head -n 1)
 DISK_SIZE="150G"
-PACKAGES=(redhat-lsb-core libXScrnSaver libnsl libpng12)
+PACKAGES=(redhat-lsb-core libXScrnSaver libnsl libpng12 boost-locale tmux libgfortran ksh java-21-openjdk mesa-libGLU tcsh motif xterm)
 SERVICES=(lmg.service)
 
 function pre() {
@@ -20,6 +20,10 @@ function pre() {
   
   cp ${ORIG_PWD}/assets/eda/*.rpm "${MOUNT}"/home/almalinux/
   cp -a ${ORIG_PWD}/assets/eda/opt "${MOUNT}"/
+  chmod 644 "${MOUNT}"/opt/eda/Synopsys/scl/2021.03/admin/license/Synopsys.dat
+
+  echo "* hard nofile 4096" >> "${MOUNT}"/etc/security/limits.conf
+  echo "* soft nofile 4096" >> "${MOUNT}"/etc/security/limits.conf
 
   arch-chroot "${MOUNT}" dnf -y install epel-release
   sed -e 's|^metalink=|#metalink=|g' \
@@ -35,7 +39,9 @@ function pre() {
 
   # disable selinux
   sed -i 's/^SELINUX=.*/SELINUX=disabled/' "${MOUNT}"/etc/selinux/config
+  rm "${MOUNT}"/etc/yum.repos.d/{rpmfusion-free-updates-testing.repo,rpmfusion-nonfree-updates.repo,rpmfusion-nonfree-updates-testing.repo,rpmfusion-free-updates.repo}
 }
+
 
 function post() {
   # Convert raw image to qcow2 format

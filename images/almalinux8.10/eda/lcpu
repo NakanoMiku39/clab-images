@@ -12,8 +12,8 @@ config_path = "/home/almalinux/.config/shadowdesk/backend.env"
 def generate_password():
     """生成随机密码：@eda加8位随机数字和字母"""
     chars = string.ascii_letters + string.digits
-    random_part = ''.join(random.choice(chars) for _ in range(8))
-    return f"@eda{random_part}"
+    random_part = ''.join(random.choice(chars) for _ in range(9))
+    return f"@eda1{random_part}"
 
 def modify_shadowdesk_config(student_id, password):
     """修改shadowdesk配置文件"""
