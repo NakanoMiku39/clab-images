@@ -5,7 +5,7 @@
 IMAGE_NAME="almalinux8.10-eda-${build_version}.qcow2"
 BASE_IMAGE=$(ls -t ${ORIG_PWD}/output/almalinux8.10-pku-*.qcow2 | head -n 1)
 DISK_SIZE="150G"
-PACKAGES=(redhat-lsb-core libXScrnSaver libnsl libpng12 boost-locale tmux libgfortran ksh java-21-openjdk mesa-libGLU tcsh motif xterm)
+PACKAGES=(redhat-lsb-core libXScrnSaver libnsl libpng12 boost-locale tmux libgfortran ksh java-21-openjdk mesa-libGLU tcsh motif xterm glibc.i686)
 SERVICES=(lmg.service)
 
 function pre() {
