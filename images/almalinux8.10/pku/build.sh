@@ -8,6 +8,7 @@ PACKAGES=()
 SERVICES=()
 
 function pre() {
+  cp $COMMON_ROOT/cluster_notifications.sh "${MOUNT}"/etc/profile.d/
   sed -e 's|^mirrorlist=|#mirrorlist=|g' -id   -i.bak  -e 's|^# baseurl=https://repo.almalinux.org|baseurl=https://mirrors.pku.edu.cn|g' \
     "${MOUNT}"/etc/yum.repos.d/almalinux.repo    "${MOUNT}"/etc/yum.repos.d/almalinux-powertools.repo
 }

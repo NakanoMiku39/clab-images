@@ -2,7 +2,7 @@
 # shellcheck disable=SC2034,SC2154
 
 # Image configuration
-IMAGE_NAME="ubuntu24.04-server-pku-${build_version}.qcow2"
+IMAGE_NAME="ubuntu22.04-server-pku-${build_version}.qcow2"
 DISK_SIZE="10G"
 PACKAGES=(qemu-guest-agent)
 SERVICES=(qemu-guest-agent.service)

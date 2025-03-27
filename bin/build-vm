@@ -170,6 +170,7 @@ function main() {
   fi
 
   FLAVOR_ROOT="${ORIG_PWD}/images/${distribution}/${flavor}"
+  COMMON_ROOT="${ORIG_PWD}/images/common"
   
   # Source the common.sh file for the distro first
   if [ -f "${ORIG_PWD}/images/${distribution}/common.sh" ]; then
