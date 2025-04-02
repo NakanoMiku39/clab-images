@@ -119,6 +119,14 @@ function main() {
     opts+=(--commands-from-file=${DISTRO_ROOT}/post_commands)
   fi
 
+  if [ -n "${DISK_SIZE:-}" ]; then
+    truncate -r  "${TMPIMG}" "${TMPIMG}.new"
+    truncate -s ${DISK_SIZE} "${TMPIMG}.new"
+    virt-resize --expand "${PART_TO_GROW}" "${TMPIMG}" "${TMPIMG}.new"
+    mv "${TMPIMG}.new" "${TMPIMG}"
+    echo "Resized ${TMPIMG} by ${DISK_SIZE}"
+  fi
+
   echo "Start virt-customize..."
   echo "+ virt-customize ${opts[@]}"
   virt-customize "${opts[@]}"
