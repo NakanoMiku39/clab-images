@@ -58,3 +58,7 @@ Note, pre will be executed after the installation of packages, and post will be 
 ### mount point busy
 
 vscode git plugin will scan your working directory and cause the mount point busy. You should close vscode or change the working directory.
+
+### ERROR: failed to setup resolv.conf
+
+In some os images, `/etc/resolv.conf` is a symbolic link, e.g. it is `/run/systemd/resolve/stub-resolv.conf` for ubuntu series. Ensure that you have this file (`/run/systemd/resolve/stub-resolv.conf`) available on your host system or arch-chroot won't be able to mount your host `/etc/resolv.conf`.
