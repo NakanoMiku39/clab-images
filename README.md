@@ -25,3 +25,4 @@ Paths should be relative to project root.
 
 - [ ] Checksum and GPG Verify downloaded images
 - [ ] GitHub Actions
+- [ ] Global pre/post_commands
