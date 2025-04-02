@@ -129,9 +129,9 @@ function create_image() {
   mv_to_output "${1}"
 }
 
-# ${1} - Optional build version. If not set, will generate a default based on date.
-# ${2} - Distribution (ubuntu, rocky, etc.)
-# ${3} - Flavor (server, minimal, etc.)
+# ${1} - Distribution (ubuntu, rocky, etc.)
+# ${2} - Flavor (server, minimal, etc.)
+# ${3} - Optional build version. If not set, will generate a default based on date.
 function main() {
   if [ "$(id -u)" -ne 0 ]; then
     echo "root is required"
@@ -142,7 +142,7 @@ function main() {
   # Check if distribution and flavor are provided
   if [ -z "${1:-}" ] || [ -z "${2:-}" ]; then
     echo "ERROR: Distribution and flavor must be specified!"
-    echo "Usage: $0 [build_version] <distribution> <flavor>"
+    echo "Usage: $0 <distribution> <flavor> [build_version]"
     exit 1
   fi
 
