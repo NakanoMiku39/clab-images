@@ -1,0 +1,2 @@
+run-command DEBIAN_FRONTEND=noninteractive apt-get autoremove -y && DEBIAN_FRONTEND=noninteractive apt-get clean
+run-command echo "enable qemu-guest-agent.service" >> /usr/lib/systemd/system-preset/80-lcpu-image.preset

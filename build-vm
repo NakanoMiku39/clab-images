@@ -1,0 +1,132 @@
+#!/bin/bash
+# Build virtual machine images (cloud image, vagrant boxes)
+
+# nounset: "Treat unset variables and parameters [...] as an error when performing parameter expansion."
+# errexit: "Exit immediately if [...] command exits with a non-zero status."
+set -o nounset -o errexit
+shopt -s extglob
+
+function init() {
+  readonly ORIG_PWD="${PWD}"
+  readonly OUTPUT="${PWD}/output"
+  readonly BASE_DIR="${PWD}/base"
+  local tmpdir
+  tmpdir="$(mktemp --dry-run --directory --tmpdir="${PWD}/tmp")"
+  readonly TMPDIR="${tmpdir}"
+  mkdir -p "${OUTPUT}" "${TMPDIR}" "${BASE_DIR}"
+}
+
+# Do some cleanup when the script exits
+function cleanup() {
+  # We want all the commands to run, even if one of them fails.
+  set +o errexit
+  if [ -n "${TMPDIR:-}" ]; then
+    rm -rf "${TMPDIR}"
+  fi
+}
+trap cleanup EXIT
+
+# Helper function: download source image
+# ${1} - destination
+# ${2} - source url
+function download_source() {
+  # Skip if the image already exists
+  if [ -f "${1}" ]; then
+    echo "Base image already exists at ${1}, skipping download."
+    return 0
+  fi
+
+  echo "Downloading ${2}..."
+  wget -c -q -O "${1}" "${2}" 
+  echo "Download complete: ${1}"
+  return 0
+}
+
+# ${1} - Distribution (ubuntu, rocky, etc.)
+# ${2} - Flavor (pku, eda, etc.)
+# ${3} - Optional build version. If not set, will generate a default based on date.
+function main() {
+  init
+
+  # Check if distro and flavor are provided
+  if [ -z "${1:-}" ] || [ -z "${2:-}" ]; then
+    echo "ERROR: Distribution and flavor must be specified!"
+    echo "Usage: $0 <distro> <flavor> [build_version]"
+    exit 1
+  fi
+
+  local distro="${1}"
+  local flavor="${2}"
+
+  local build_version
+  if [ -z "${3:-}" ]; then
+    build_version="$(date +%Y%m%d)"
+    echo "WARNING: BUILD_VERSION wasn't set!"
+    echo "Falling back to $build_version"
+  else
+    build_version="${3}"
+  fi
+  
+  # Check if the distro and flavor directories exist
+  if [ ! -f "${ORIG_PWD}/images/${distro}/distro.conf" ]; then
+    echo "ERROR: Distribution '${distro}' not found in images directory!"
+    exit 1
+  fi
+  
+  if [ ! -f "${ORIG_PWD}/images/${distro}/${flavor}/flavor.conf" ]; then
+    echo "ERROR: Flavor '${flavor}' not found for distro '${distro}'!"
+    exit 1
+  fi
+
+  source "${ORIG_PWD}/images/${distro}/distro.conf"
+
+  BASE_IMAGE="${BASE_DIR}/${distro}.img"
+  download_source ${BASE_IMAGE} ${SOURCE_URL}
+
+  DISTRO_ROOT="${ORIG_PWD}/images/${distro}"
+  FLAVOR_ROOT="${ORIG_PWD}/images/${distro}/${flavor}"
+
+  TMPIMG="${TMPDIR}/${distro}-${flavor}-${build_version}.qcow2"
+  cp -a "${BASE_IMAGE}" ${TMPIMG}
+  
+  opts=(--format auto -a ${TMPIMG})
+
+  if [[ -f "${DISTRO_ROOT}/pre_commands" ]]; then
+    opts+=(--commands-from-file=${DISTRO_ROOT}/pre_commands)
+  fi
+
+  if [ 0 -lt "${#PACKAGES[@]}" ]; then
+    PACKAGES_STRING=$(printf "%s," "${PACKAGES[@]}")
+    PACKAGES_STRING=${PACKAGES_STRING%,} 
+    opts+=(--install=${PACKAGES_STRING})
+  fi
+
+  source "${ORIG_PWD}/images/${distro}/${flavor}/flavor.conf"
+
+  if [[ -f "${FLAVOR_ROOT}/pre_commands" ]]; then
+    opts+=(--commands-from-file=${FLAVOR_ROOT}/pre_commands)
+  fi
+  if [ 0 -lt "${#PACKAGES[@]}" ]; then
+    PACKAGES_STRING=$(printf "%s," "${PACKAGES[@]}")
+    PACKAGES_STRING=${PACKAGES_STRING%,} 
+    opts+=(--install=${PACKAGES_STRING})
+  fi
+  if [[ -f "${FLAVOR_ROOT}/post_commands" ]]; then
+    opts+=(--commands-from-file=${FLAVOR_ROOT}/post_commands)
+  fi
+
+  if [[ -f "${DISTRO_ROOT}/post_commands" ]]; then
+    opts+=(--commands-from-file=${DISTRO_ROOT}/post_commands)
+  fi
+
+  echo "Start virt-customize..."
+  echo "+ virt-customize ${opts[@]}"
+  virt-customize "${opts[@]}"
+  
+  echo "Finishing..."
+  sha256sum "${TMPIMG}" >"${TMPIMG}.SHA256"
+  mv "${TMPIMG}"{,.SHA256} "${OUTPUT}/"
+  echo "Saved image to ${OUTPUT}/${distro}-${flavor}-${build_version}.qcow2"
+}
+
+main "$@"

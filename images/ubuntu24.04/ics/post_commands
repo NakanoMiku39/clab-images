@@ -1,0 +1,1 @@
+run-command echo "enable unattended-upgrades.service" >> /usr/lib/systemd/system-preset/80-lcpu-image.preset

@@ -1,0 +1,3 @@
+run-command sed -i 's|http://%(availability_zone)s.clouds.archive.ubuntu.com/ubuntu/|https://mirrors.lcpu.dev/ubuntu/|g' /etc/cloud/cloud.cfg
+#run-command  sed -i 's|http://security.ubuntu.com/ubuntu|https://mirrors.lcpu.dev/ubuntu|g' /etc/cloud/cloud.cfg
+run-command  sed -i 's|http://archive.ubuntu.com/ubuntu|https://mirrors.lcpu.dev/ubuntu|g' /etc/cloud/cloud.cfg
