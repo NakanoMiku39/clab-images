@@ -1,23 +1,23 @@
 run-command mkdir -p /home/almalinux/.config/shadowdesk
-chown 1000:1000:/home/almalinux/.config/shadowdesk
+run-command chown 1000:1000 /home/almalinux/.config/shadowdesk
 upload images/almalinux8.10/eda/rpmfusion.repo:/etc/yum.repos.d/rpmfusion.repo
-chown 0:0:/etc/yum.repos.d/rpmfusion.repo
+run-command chown 0:0 /etc/yum.repos.d/rpmfusion.repo
 upload images/almalinux8.10/eda/backend.env:/home/almalinux/.config/shadowdesk/backend.env
 chmod 0644:/home/almalinux/.config/shadowdesk/backend.env
-chown 1000:1000:/home/almalinux/.config/shadowdesk/backend.env
+run-command chown 1000:1000 /home/almalinux/.config/shadowdesk/backend.env
 
 upload images/almalinux8.10/eda/lmg.service:/etc/systemd/system/
-chown 0:0:/etc/systemd/system/lmg.service
+run-command chown 0:0 /etc/systemd/system/lmg.service
 upload images/almalinux8.10/eda/shadowdesk@.service:/etc/systemd/system/
-chown 0:0:/etc/systemd/system/shadowdesk@.service
+run-command chown 0:0 /etc/systemd/system/shadowdesk@.service
 upload images/almalinux8.10/eda/shadowgnome@.service:/etc/systemd/system/
-chown 0:0:/etc/systemd/system/shadowgnome@.service
+run-command chown 0:0 /etc/systemd/system/shadowgnome@.service
 upload images/almalinux8.10/eda/shadowxvfb@.service:/etc/systemd/system/
-chown 0:0:/etc/systemd/system/shadowxvfb@.service
+run-command chown 0:0 /etc/systemd/system/shadowxvfb@.service
 
 upload images/almalinux8.10/eda/.bashrc:/home/almalinux/.bashrc
 chmod 0644:/home/almalinux/.bashrc
-chown 1000:1000:/home/almalinux/.bashrc
+run-command chown 1000:1000 /home/almalinux/.bashrc
 
 upload images/almalinux8.10/eda/lcpu:/usr/local/bin/
 
