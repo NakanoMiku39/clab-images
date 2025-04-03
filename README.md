@@ -20,6 +20,21 @@ cd clab-images
 
 Setup config and respective scripts in `images/<distro>/distro.conf`, `images/<distro>/{pre,post}_commands`, `images/<distro>/<flavor>/flavor.conf` and `images/<distro>/<flavor>/{pre_post}_commands`.
 
+- `distro.conf`
+    ```conf
+    SOURCE_URL="https://mirrors.pku.edu.cn/almalinux/8.10/cloud/x86_64/images/AlmaLinux-8-GenericCloud-latest.x86_64.qcow2" # REQUIRED! Image source url
+    PACKAGES=(qemu-guest-agent) # Packages to install
+    ```
+
+- `flavor.conf`
+    ```conf
+    PACKAGES=() # REQUIRED! Packages to install
+    DISK_SIZE=+150G # Size to grow for disk
+    PART_TO_GROW=/dev/sda4 #Partition to grow
+    MEMORY=4096 # Memory limit for running virt-customize (MB)
+    CPU=8 # CPUs for running virt-customize
+    ```
+
 Paths should be relative to project root.
 
 ## Q&A
@@ -42,7 +57,7 @@ Then run `build-vm` with `SUPERMIN_KERNEL=kernel/boot/vmlinuz-6.14.0-061400-gene
 
 ### Can't resolve hostname inside virt-customize
 
-Under circumstances when the host's `/etc/resolv.conf` specifies dns server at `localhost` or other corner cases, the virt-host 
+Under circumstances when the host's `/etc/resolv.conf` specifies dns server at `localhost` or other corner cases, the virtual machine won't be able to resolve hostnames. Try running with sudo or specify dns in guest's `/etc/resolv.conf` directly. 
 
 ## To-dos
 
