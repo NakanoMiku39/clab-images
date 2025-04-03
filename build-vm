@@ -134,6 +134,14 @@ function main() {
     BASE_IMAGE="${DISTRO_BASE_IMAGE}"
   fi
 
+  if [ -n "${MEMORY:-}" ]; then
+    opts+=(--memsize=${MEMORY})
+  fi
+
+  if [ -n "${CPU:-}" ]; then
+    opts+=(--smp=${CPU})
+  fi
+
   TMPIMG="${TMPDIR}/${distro}-${flavor}-${build_version}.qcow2"
   cp -a "${BASE_IMAGE}" ${TMPIMG}
 
