@@ -78,6 +78,7 @@ function main() {
     exit 1
   fi
 
+  PACKAGES=()
   source "${ORIG_PWD}/images/${distro}/distro.conf"
 
   DISTRO_BASE_IMAGE="${BASE_DIR}/${distro}.img"
@@ -94,18 +95,19 @@ function main() {
   fi
 
   if [ 0 -lt "${#PACKAGES[@]}" ]; then
-    PACKAGES_STRING=$(printf "%s," "${PACKAGES[@]}")
+    local PACKAGES_STRING=$(printf "%s," "${PACKAGES[@]}")
     PACKAGES_STRING=${PACKAGES_STRING%,} 
     opts+=(--install=${PACKAGES_STRING})
   fi
 
+  PACKAGES=()
   source "${ORIG_PWD}/images/${distro}/${flavor}/flavor.conf"
 
   if [[ -f "${FLAVOR_ROOT}/pre_commands" ]]; then
     opts+=(--commands-from-file=${FLAVOR_ROOT}/pre_commands)
   fi
   if [ 0 -lt "${#PACKAGES[@]}" ]; then
-    PACKAGES_STRING=$(printf "%s," "${PACKAGES[@]}")
+    local PACKAGES_STRING=$(printf "%s," "${PACKAGES[@]}")
     PACKAGES_STRING=${PACKAGES_STRING%,} 
     opts+=(--install=${PACKAGES_STRING})
   fi
