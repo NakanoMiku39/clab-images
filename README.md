@@ -24,6 +24,7 @@ Setup config and respective scripts in `images/<distro>/distro.conf`, `images/<d
     ```conf
     SOURCE_URL="https://mirrors.pku.edu.cn/almalinux/8.10/cloud/x86_64/images/AlmaLinux-8-GenericCloud-latest.x86_64.qcow2" # REQUIRED! Image source url
     PACKAGES=(qemu-guest-agent) # Packages to install
+    TIMEZONE=Asia/Singapore # Default: Asia/Shanghai
     ```
 
 - `flavor.conf`
@@ -33,6 +34,7 @@ Setup config and respective scripts in `images/<distro>/distro.conf`, `images/<d
     PART_TO_GROW=/dev/sda4 #Partition to grow
     MEMORY=4096 # Memory limit for running virt-customize (MB)
     CPU=8 # CPUs for running virt-customize
+    TIMEZONE=Asia/Singapore # Default: Asia/Shanghai
     ```
 
 Paths should be relative to project root.

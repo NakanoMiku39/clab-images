@@ -142,6 +142,12 @@ function main() {
     opts+=(--smp=${CPU})
   fi
 
+  if [ -n "${TIMEZONE:-}" ]; then
+    opts+=(--timezone=${TIMEZONE})
+  else
+    opts+=(--timezone=Asia/Shanghai)
+  fi
+
   TMPIMG="${TMPDIR}/${distro}-${flavor}-${build_version}.qcow2"
   cp -a "${BASE_IMAGE}" ${TMPIMG}
 
