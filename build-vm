@@ -149,7 +149,7 @@ function main() {
   echo "+ virt-customize --format auto -a ${TMPIMG} ${opts[@]}"
   virt-customize --format auto -a "${TMPIMG}" "${opts[@]}"
   
-  echo "Finishing..."
+  echo "Customization finished! Calculating SHA256SUM..."
   sha256sum "${TMPIMG}" > "${TMPIMG}.SHA256"
   mv "${TMPIMG}"{,.SHA256} "${OUTPUT}/"
   echo "Saved image to ${OUTPUT}/${distro}-${flavor}-${build_version}.qcow2"
