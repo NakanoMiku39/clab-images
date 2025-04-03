@@ -1,5 +1,2 @@
 upload images/ubuntu24.04/ics/lcpu.sources:/etc/apt/sources.list.d/lcpu.sources
 run-command chown 0:0 /etc/apt/sources.list.d/lcpu.sources
-run-command sed -i 's|http://%(availability_zone)s.clouds.archive.ubuntu.com/ubuntu/|https://mirrors.lcpu.dev/ubuntu/|g' /etc/cloud/cloud.cfg
-#run-command sed -i 's|http://security.ubuntu.com/ubuntu|https://mirrors.lcpu.dev/ubuntu|g' /etc/cloud/cloud.cfg
-run-command sed -i 's|http://archive.ubuntu.com/ubuntu|https://mirrors.lcpu.dev/ubuntu|g' /etc/cloud/cloud.cfg

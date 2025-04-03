@@ -1,1 +1,0 @@
-run-command sed -i '/debian-security/!s|http://deb.debian.org/debian|http://mirrors.lcpu.dev/debian|' /etc/apt/sources.list.d/debian.sources
