@@ -6,6 +6,7 @@ This repository contains images for PKU CLab.
 
 - `virt-customize`
 - `virt-resize` (for growing disk images)
+- `qemu-img` (for growing disk images)
 
 ## Usage
 
@@ -29,8 +30,8 @@ Setup config and respective scripts in `images/<distro>/distro.conf`, `images/<d
 
 - `flavor.conf`
     ```conf
-    PACKAGES=() # REQUIRED! Packages to install
-    DISK_SIZE=+150G # Size to grow for disk
+    PACKAGES=() # Packages to install
+    DISK_SIZE=150G # Size to grow for disk
     PART_TO_GROW=/dev/sda4 #Partition to grow
     MEMORY=4096 # Memory limit for running virt-customize (MB)
     CPU=8 # CPUs for running virt-customize

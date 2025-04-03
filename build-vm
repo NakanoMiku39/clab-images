@@ -125,8 +125,7 @@ function main() {
     BASE_IMAGE="${BASE_DIR}/${distro}-${flavor}-${DISK_SIZE}.img"
     if [ ! -f "${BASE_IMAGE}" ]; then
       echo "Resizing base image by ${DISK_SIZE}"
-      truncate -r  "${DISTRO_BASE_IMAGE}" "${BASE_IMAGE}"
-      truncate -s ${DISK_SIZE} "${BASE_IMAGE}"
+      qemu-img create -f qcow2 -o preallocation=metadata "${BASE_IMAGE}" "${DISK_SIZE}"
       virt-resize --expand "${PART_TO_GROW}" "${DISTRO_BASE_IMAGE}" "${BASE_IMAGE}"
       echo "Resized ${BASE_IMAGE} by ${DISK_SIZE}"
     else 
