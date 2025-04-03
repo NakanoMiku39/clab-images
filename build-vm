@@ -31,14 +31,16 @@ trap cleanup EXIT
 # ${2} - source url
 function download_source() {
   # Skip if the image already exists
-  if [ -f "${1}" ]; then
+  if [ -f "${1}.ok" ] && [ -f "${1}" ]; then
     echo "Base image already exists at ${1}, skipping download."
     return 0
   fi
 
   echo "Downloading ${2}..."
-  wget -c -q -O "${1}" "${2}" 
-  echo "Download complete: ${1}"
+  rm -f "${1}"
+  wget -q -O "${1}" "${2}" 
+  touch "${1}.ok"
+  echo "Downloaded ${1}"
   return 0
 }
 
@@ -65,7 +67,10 @@ function main() {
     build_version="${3}"
   fi
 
-  echo "Building distro: ${distro} flavor: ${flavor} version: ${build_version}"
+  echo "Start building..."
+  echo " - distro: ${distro}"
+  echo " - flavor: ${flavor}"
+  echo " - version: ${build_version}"
   
   # Check if the distro and flavor directories exist
   if [ ! -f "${ORIG_PWD}/images/${distro}/distro.conf" ]; then
@@ -81,17 +86,17 @@ function main() {
   PACKAGES=()
   source "${ORIG_PWD}/images/${distro}/distro.conf"
 
-  DISTRO_BASE_IMAGE="${BASE_DIR}/${distro}.img"
+  local distro_base_image="${BASE_DIR}/${distro}.img"
 
-  download_source "${DISTRO_BASE_IMAGE}" "${SOURCE_URL}"
+  download_source "${distro_base_image}" "${SOURCE_URL}"
 
-  DISTRO_ROOT="${ORIG_PWD}/images/${distro}"
-  FLAVOR_ROOT="${ORIG_PWD}/images/${distro}/${flavor}"
+  local distro_root="${ORIG_PWD}/images/${distro}"
+  local flavor_root="${ORIG_PWD}/images/${distro}/${flavor}"
   
-  opts=()
+  local opts=()
 
-  if [[ -f "${DISTRO_ROOT}/pre_commands" ]]; then
-    opts+=(--commands-from-file=${DISTRO_ROOT}/pre_commands)
+  if [[ -f "${distro_root}/pre_commands" ]]; then
+    opts+=(--commands-from-file=${distro_root}/pre_commands)
   fi
 
   if [ 0 -lt "${#PACKAGES[@]}" ]; then
@@ -103,36 +108,38 @@ function main() {
   PACKAGES=()
   source "${ORIG_PWD}/images/${distro}/${flavor}/flavor.conf"
 
-  if [[ -f "${FLAVOR_ROOT}/pre_commands" ]]; then
-    opts+=(--commands-from-file=${FLAVOR_ROOT}/pre_commands)
+  if [[ -f "${flavor_root}/pre_commands" ]]; then
+    opts+=(--commands-from-file=${flavor_root}/pre_commands)
   fi
   if [ 0 -lt "${#PACKAGES[@]}" ]; then
     local PACKAGES_STRING=$(printf "%s," "${PACKAGES[@]}")
     PACKAGES_STRING=${PACKAGES_STRING%,} 
     opts+=(--install=${PACKAGES_STRING})
   fi
-  if [[ -f "${FLAVOR_ROOT}/post_commands" ]]; then
-    opts+=(--commands-from-file=${FLAVOR_ROOT}/post_commands)
+  if [[ -f "${flavor_root}/post_commands" ]]; then
+    opts+=(--commands-from-file=${flavor_root}/post_commands)
   fi
 
-  if [[ -f "${DISTRO_ROOT}/post_commands" ]]; then
-    opts+=(--commands-from-file=${DISTRO_ROOT}/post_commands)
+  if [[ -f "${distro_root}/post_commands" ]]; then
+    opts+=(--commands-from-file=${distro_root}/post_commands)
   fi
 
-  BASE_IMAGE=""
+  local base_image
 
   if [ -n "${DISK_SIZE:-}" ]; then
-    BASE_IMAGE="${BASE_DIR}/${distro}-${flavor}-${DISK_SIZE}.img"
-    if [ ! -f "${BASE_IMAGE}" ]; then
-      echo "Resizing base image by ${DISK_SIZE}"
-      qemu-img create -f qcow2 -o preallocation=metadata "${BASE_IMAGE}" "${DISK_SIZE}"
-      virt-resize --expand "${PART_TO_GROW}" "${DISTRO_BASE_IMAGE}" "${BASE_IMAGE}"
-      echo "Resized ${BASE_IMAGE} by ${DISK_SIZE}"
-    else 
+    base_image="${BASE_DIR}/${distro}-${flavor}-${DISK_SIZE}.img"
+    if [ -f "${base_image}.ok" ] && [ -f "${base_image}" ]; then
       echo "Base image already resized. Skipping..."
+    else 
+      echo "Resizing base image by ${DISK_SIZE}..."
+      rm -f "${base_image}"
+      qemu-img create -f qcow2 -o preallocation=metadata "${base_image}" "${DISK_SIZE}"
+      virt-resize --expand "${PART_TO_GROW}" "${distro_base_image}" "${base_image}"
+      touch "${base_image}.ok"
+      echo "Resized ${base_image} by ${DISK_SIZE}"
     fi
   else
-    BASE_IMAGE="${DISTRO_BASE_IMAGE}"
+    base_image="${distro_base_image}"
   fi
 
   if [ -n "${MEMORY:-}" ]; then
@@ -149,16 +156,16 @@ function main() {
     opts+=(--timezone=Asia/Shanghai)
   fi
 
-  TMPIMG="${TMPDIR}/${distro}-${flavor}-${build_version}.qcow2"
-  cp -a "${BASE_IMAGE}" ${TMPIMG}
+  local tmp_image="${TMPDIR}/${distro}-${flavor}-${build_version}.qcow2"
+  cp -a "${base_image}" ${tmp_image}
 
   echo "Start virt-customize..."
-  echo "+ virt-customize --format auto -a ${TMPIMG} ${opts[@]}"
-  virt-customize --format auto -a "${TMPIMG}" "${opts[@]}"
+  echo "+ virt-customize --format auto -a ${tmp_image} ${opts[@]}"
+  virt-customize --format auto -a "${tmp_image}" "${opts[@]}"
   
   echo "Customization finished! Calculating SHA256SUM..."
-  sha256sum "${TMPIMG}" > "${TMPIMG}.SHA256"
-  mv "${TMPIMG}"{,.SHA256} "${OUTPUT}/"
+  sha256sum "${tmp_image}" > "${tmp_image}.SHA256"
+  mv "${tmp_image}"{,.SHA256} "${OUTPUT}/"
   echo "Saved image to ${OUTPUT}/${distro}-${flavor}-${build_version}.qcow2"
 }
 

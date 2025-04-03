@@ -1,4 +1,3 @@
-run-command sed -i 's/deb.debian.org/mirrors.lcpu.dev/g' /etc/apt/mirrors/debian.list
 run-command DEBIAN_FRONTEND=noninteractive apt-get update && DEBIAN_FRONTEND=noninteractive apt-get upgrade -y
-upload images/common/cluster_notifications.sh:/etc/profile.d/cluster_notifications.sh
+upload assets/common/cluster_notifications.sh:/etc/profile.d/cluster_notifications.sh
 run-command chown 0:0 /etc/profile.d/cluster_notifications.sh

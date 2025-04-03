@@ -21,7 +21,6 @@ run-command chown 1000:1000 /home/almalinux/.bashrc
 
 upload images/almalinux8.10/eda/lcpu:/usr/local/bin/
 
-run-command mkdir /home/almalinux/tmp/
 copy-in assets/eda/rpm:/home/almalinux
 copy-in assets/eda/opt:/
 
