@@ -102,7 +102,7 @@ function main() {
 
   if [[ ! -n "${NO_DEFAULT:-}" ]]; then
     if [[ -f "${ORIG_PWD}/images/default/pre_commands" ]]; then
-    opts+=(--commands-from-file=${ORIG_PWD}/images/default/pre_commands)
+      opts+=(--commands-from-file=${ORIG_PWD}/images/default/pre_commands)
     fi
   fi
 
@@ -111,9 +111,9 @@ function main() {
   fi
 
   if [ 0 -lt "${#PACKAGES[@]}" ]; then
-    local PACKAGES_STRING=$(printf "%s," "${PACKAGES[@]}")
-    PACKAGES_STRING=${PACKAGES_STRING%,} 
-    opts+=(--install=${PACKAGES_STRING})
+    local packages_string=$(printf "%s," "${PACKAGES[@]}")
+    packages_string=${packages_string%,} 
+    opts+=(--install=${packages_string})
   fi
 
   PACKAGES=()
@@ -123,9 +123,9 @@ function main() {
     opts+=(--commands-from-file=${flavor_root}/pre_commands)
   fi
   if [ 0 -lt "${#PACKAGES[@]}" ]; then
-    local PACKAGES_STRING=$(printf "%s," "${PACKAGES[@]}")
-    PACKAGES_STRING=${PACKAGES_STRING%,} 
-    opts+=(--install=${PACKAGES_STRING})
+    local packages_string=$(printf "%s," "${PACKAGES[@]}")
+    packages_string=${packages_string%,} 
+    opts+=(--install=${packages_string})
   fi
   if [[ -f "${flavor_root}/post_commands" ]]; then
     opts+=(--commands-from-file=${flavor_root}/post_commands)
@@ -137,7 +137,7 @@ function main() {
 
   if [[ ! -n "${NO_DEFAULT:-}" ]]; then
     if [[ -f "${ORIG_PWD}/images/default/post_commands" ]]; then
-    opts+=(--commands-from-file=${ORIG_PWD}/images/default/post_commands)
+      opts+=(--commands-from-file=${ORIG_PWD}/images/default/post_commands)
     fi
   fi
 
