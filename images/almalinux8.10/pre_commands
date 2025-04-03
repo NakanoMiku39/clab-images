@@ -1,4 +1,2 @@
 run-command sed -e 's|^mirrorlist=|#mirrorlist=|g' -id -i.bak -e 's|^# baseurl=https://repo.almalinux.org|baseurl=https://mirrors.lcpu.dev|g' /etc/yum.repos.d/almalinux.repo /etc/yum.repos.d/almalinux-powertools.repo
 run-command dnf update -y
-upload assets/common/cluster_notifications.sh:/etc/profile.d/cluster_notifications.sh
-run-command chown 0:0 /etc/profile.d/cluster_notifications.sh

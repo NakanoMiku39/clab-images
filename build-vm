@@ -67,11 +67,6 @@ function main() {
     build_version="${3}"
   fi
 
-  echo "Start building..."
-  echo " - distro: ${distro}"
-  echo " - flavor: ${flavor}"
-  echo " - version: ${build_version}"
-  
   # Check if the distro and flavor directories exist
   if [ ! -f "${ORIG_PWD}/images/${distro}/distro.conf" ]; then
     echo "ERROR: Distro '${distro}' not found in images directory!"
@@ -81,6 +76,16 @@ function main() {
   if [ ! -f "${ORIG_PWD}/images/${distro}/${flavor}/flavor.conf" ]; then
     echo "ERROR: Flavor '${flavor}' not found for distro '${distro}'!"
     exit 1
+  fi
+
+  echo "Start building..."
+  echo " - distro: ${distro}"
+  echo " - flavor: ${flavor}"
+  echo " - version: ${build_version}"
+  if [[ ! -n "${NO_DEFAULT:-}" ]]; then
+    echo " - use_default: yes"
+  else
+    echo " - use_default: no"
   fi
 
   PACKAGES=()
@@ -94,6 +99,12 @@ function main() {
   local flavor_root="${ORIG_PWD}/images/${distro}/${flavor}"
   
   local opts=()
+
+  if [[ ! -n "${NO_DEFAULT:-}" ]]; then
+    if [[ -f "${ORIG_PWD}/images/default/pre_commands" ]]; then
+    opts+=(--commands-from-file=${ORIG_PWD}/images/default/pre_commands)
+    fi
+  fi
 
   if [[ -f "${distro_root}/pre_commands" ]]; then
     opts+=(--commands-from-file=${distro_root}/pre_commands)
@@ -122,6 +133,12 @@ function main() {
 
   if [[ -f "${distro_root}/post_commands" ]]; then
     opts+=(--commands-from-file=${distro_root}/post_commands)
+  fi
+
+  if [[ ! -n "${NO_DEFAULT:-}" ]]; then
+    if [[ -f "${ORIG_PWD}/images/default/post_commands" ]]; then
+    opts+=(--commands-from-file=${ORIG_PWD}/images/default/post_commands)
+    fi
   fi
 
   local base_image

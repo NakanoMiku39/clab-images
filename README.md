@@ -19,7 +19,9 @@ cd clab-images
 ```
 ### Add a new distro
 
-Setup config and respective scripts in `images/<distro>/distro.conf`, `images/<distro>/{pre,post}_commands`, `images/<distro>/<flavor>/flavor.conf` and `images/<distro>/<flavor>/{pre_post}_commands`.
+Setup config and respective scripts in `images/<distro>/distro.conf`, `images/<distro>/{pre,post}_commands`, `images/<distro>/<flavor>/flavor.conf` and `images/<distro>/<flavor>/{pre,post}_commands`.
+
+You can also set global commands at `images/default/{pre,post}_commands. (This behavior can be disabled by exporting NO_DEFAULT=1)
 
 - `distro.conf`
     ```conf
@@ -66,4 +68,4 @@ Under circumstances when the host's `/etc/resolv.conf` specifies dns server at `
 
 - [ ] Checksum and GPG Verify downloaded images
 - [ ] GitHub Actions
-- [ ] Global pre/post_commands
+- [x] Global pre/post_commands

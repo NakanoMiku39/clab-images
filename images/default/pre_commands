@@ -1,0 +1,2 @@
+upload images/default/cluster_notifications.sh:/etc/profile.d/cluster_notifications.sh
+run-command chown 0:0 /etc/profile.d/cluster_notifications.sh
