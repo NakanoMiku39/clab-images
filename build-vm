@@ -42,7 +42,7 @@ function download_source() {
   return 0
 }
 
-# ${1} - Distribution (ubuntu, rocky, etc.)
+# ${1} - Distro (ubuntu, rocky, etc.)
 # ${2} - Flavor (pku, eda, etc.)
 # ${3} - Optional build version. If not set, will generate a default based on date.
 function main() {
@@ -50,7 +50,7 @@ function main() {
 
   # Check if distro and flavor are provided
   if [ -z "${1:-}" ] || [ -z "${2:-}" ]; then
-    echo "ERROR: Distribution and flavor must be specified!"
+    echo "ERROR: Distro and flavor must be specified!"
     echo "Usage: $0 <distro> <flavor> [build_version]"
     exit 1
   fi
@@ -61,15 +61,15 @@ function main() {
   local build_version
   if [ -z "${3:-}" ]; then
     build_version="$(date +%Y%m%d)"
-    echo "WARNING: BUILD_VERSION wasn't set!"
-    echo "Falling back to $build_version"
   else
     build_version="${3}"
   fi
+
+  echo "Building distro: ${distro} flavor: ${flavor} version: ${build_version}"
   
   # Check if the distro and flavor directories exist
   if [ ! -f "${ORIG_PWD}/images/${distro}/distro.conf" ]; then
-    echo "ERROR: Distribution '${distro}' not found in images directory!"
+    echo "ERROR: Distro '${distro}' not found in images directory!"
     exit 1
   fi
   
@@ -80,16 +80,14 @@ function main() {
 
   source "${ORIG_PWD}/images/${distro}/distro.conf"
 
-  BASE_IMAGE="${BASE_DIR}/${distro}.img"
-  download_source ${BASE_IMAGE} ${SOURCE_URL}
+  DISTRO_BASE_IMAGE="${BASE_DIR}/${distro}.img"
+
+  download_source "${DISTRO_BASE_IMAGE}" "${SOURCE_URL}"
 
   DISTRO_ROOT="${ORIG_PWD}/images/${distro}"
   FLAVOR_ROOT="${ORIG_PWD}/images/${distro}/${flavor}"
-
-  TMPIMG="${TMPDIR}/${distro}-${flavor}-${build_version}.qcow2"
-  cp -a "${BASE_IMAGE}" ${TMPIMG}
   
-  opts=(--format auto -a ${TMPIMG})
+  opts=()
 
   if [[ -f "${DISTRO_ROOT}/pre_commands" ]]; then
     opts+=(--commands-from-file=${DISTRO_ROOT}/pre_commands)
@@ -119,20 +117,32 @@ function main() {
     opts+=(--commands-from-file=${DISTRO_ROOT}/post_commands)
   fi
 
+  BASE_IMAGE=""
+
   if [ -n "${DISK_SIZE:-}" ]; then
-    truncate -r  "${TMPIMG}" "${TMPIMG}.new"
-    truncate -s ${DISK_SIZE} "${TMPIMG}.new"
-    virt-resize --expand "${PART_TO_GROW}" "${TMPIMG}" "${TMPIMG}.new"
-    mv "${TMPIMG}.new" "${TMPIMG}"
-    echo "Resized ${TMPIMG} by ${DISK_SIZE}"
+    BASE_IMAGE="${BASE_DIR}/${distro}-${flavor}-${DISK_SIZE}.img"
+    if [ ! -f "${BASE_IMAGE}" ]; then
+      echo "Resizing base image by ${DISK_SIZE}"
+      truncate -r  "${DISTRO_BASE_IMAGE}" "${BASE_IMAGE}"
+      truncate -s ${DISK_SIZE} "${BASE_IMAGE}"
+      virt-resize --expand "${PART_TO_GROW}" "${DISTRO_BASE_IMAGE}" "${BASE_IMAGE}"
+      echo "Resized ${BASE_IMAGE} by ${DISK_SIZE}"
+    else 
+      echo "Base image already resized. Skipping..."
+    fi
+  else
+    BASE_IMAGE="${DISTRO_BASE_IMAGE}"
   fi
 
+  TMPIMG="${TMPDIR}/${distro}-${flavor}-${build_version}.qcow2"
+  cp -a "${BASE_IMAGE}" ${TMPIMG}
+
   echo "Start virt-customize..."
-  echo "+ virt-customize ${opts[@]}"
-  virt-customize "${opts[@]}"
+  echo "+ virt-customize --format auto -a ${TMPIMG} ${opts[@]}"
+  virt-customize --format auto -a "${TMPIMG}" "${opts[@]}"
   
   echo "Finishing..."
-  sha256sum "${TMPIMG}" >"${TMPIMG}.SHA256"
+  sha256sum "${TMPIMG}" > "${TMPIMG}.SHA256"
   mv "${TMPIMG}"{,.SHA256} "${OUTPUT}/"
   echo "Saved image to ${OUTPUT}/${distro}-${flavor}-${build_version}.qcow2"
 }
