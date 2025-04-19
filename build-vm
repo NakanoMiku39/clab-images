@@ -159,13 +159,13 @@ function main() {
     base_image="${distro_base_image}"
   fi
 
-  if [ -n "${MEMORY:-}" ]; then
-    opts+=(--memsize=${MEMORY})
-  fi
+  # if [ -n "${MEMORY:-}" ]; then
+  #   opts+=(--memsize=${MEMORY})
+  # fi
 
-  if [ -n "${CPU:-}" ]; then
-    opts+=(--smp=${CPU})
-  fi
+  # if [ -n "${CPU:-}" ]; then
+  #   opts+=(--smp=${CPU})
+  # fi
 
   if [ -n "${TIMEZONE:-}" ]; then
     opts+=(--timezone=${TIMEZONE})
@@ -178,7 +178,7 @@ function main() {
 
   echo "Start virt-customize..."
   echo "+ virt-customize --format auto -a ${tmp_image} ${opts[@]}"
-  virt-customize --format auto -a "${tmp_image}" "${opts[@]}"
+  virt-sysprep --format auto -a "${tmp_image}" "${opts[@]}" --network
   
   echo "Customization finished! Calculating SHA256SUM..."
   sha256sum "${tmp_image}" > "${tmp_image}.SHA256"
